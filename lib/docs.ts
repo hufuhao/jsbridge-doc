@@ -1,141 +1,57 @@
-export type ApiParam = {
-  name: string;
-  type: string;
-  required?: boolean;
-  description: string;
-};
-
+export type ApiParam = { name: string; type: string; required?: boolean; description: string };
 export type ApiDoc = {
-  slug: string;
-  name: string;
-  exportedAs?: string;
-  category: "设备" | "导航" | "用户" | "生态";
-  summary: string;
-  nativeType: string;
-  availability?: string;
-  params: ApiParam[];
-  returns: string;
-  example: string;
-  notes: string[];
+  slug: string; name: string; aliases?: string; category: "导航" | "系统" | "交互" | "媒体" | "存储" | "扩展";
+  summary: string; nativeType: string; availability?: string; params: ApiParam[]; returns: string; example: string; notes: string[];
 };
 
-const callbacks: ApiParam[] = [
-  { name: "success", type: "(result?) => void", description: "调用成功时执行。不同 API 的 result 结构见返回值。" },
-  { name: "fail", type: "(error?) => void", description: "Bridge 未就绪、Promise 拒绝或业务结果判定失败时执行。" },
-  { name: "complete", type: "() => void", description: "Promise 结束后执行；个别前置校验失败场景除外。" },
+const cb: ApiParam[] = [
+  { name: "success", type: "(result?) => void", description: "成功时执行；具体 result 见返回说明。" },
+  { name: "fail", type: "(error?) => void", description: "Bridge 拒绝、原生返回失败或校验失败时执行。" },
+  { name: "complete", type: "() => void", description: "异步流程结束后执行；同步回退与个别前置校验除外。" },
 ];
+const native = (description = "设为 true 时强制走 Flutter；false 时回退官方 uni API。") => ({ name: "useNative", type: "boolean", description });
 
 export const apiDocs: ApiDoc[] = [
-  {
-    slug: "choose-image", name: "chooseImage", category: "设备", summary: "从相册选择图片或唤起相机拍摄。", nativeType: "chooseImage",
-    params: [
-      { name: "count", type: "number", required: true, description: "最多选择的图片数量。" },
-      { name: "sizeType", type: "['original', 'compressed']", required: true, description: "源码当前声明为固定二元组，需同时传 original 与 compressed。" },
-      { name: "sourceType", type: "['album', 'camera']", required: true, description: "源码当前声明为固定二元组，需同时传 album 与 camera。" }, ...callbacks,
-    ],
-    returns: "success 回调收到原生完整响应，应包含 tempFilePaths: string[]、tempFiles: { size, type }[] 以及 success 标记。",
-    example: `uni.chooseImage({\n  count: 3,\n  sizeType: ['original', 'compressed'],\n  sourceType: ['album', 'camera'],\n  success: ({ tempFilePaths }) => {\n    console.log('已选择', tempFilePaths);\n  },\n  fail: () => console.error('选择失败'),\n  complete: () => console.log('选择流程结束')\n});`,
-    notes: ["权限申请与拒绝后的提示由 Flutter 容器负责。", "大图建议在原生侧压缩并限制数量，避免 WebView 内存峰值。"],
-  },
-  {
-    slug: "get-location", name: "getLocation", category: "设备", summary: "获取当前经纬度。", nativeType: "getLocation",
-    params: callbacks,
-    returns: "原生响应需使用 { data: { latitude: number, longitude: number } } 结构；success 仅收到 data。",
-    example: `uni.getLocation({\n  success: ({ latitude, longitude }) => {\n    console.log({ latitude, longitude });\n  },\n  fail: () => console.error('定位失败')\n});`,
-    notes: ["源码使用真值判断校验经纬度；latitude 或 longitude 为 0 时会被误判失败，建议后续修正为数值类型判断。", "定位权限与隐私文案必须由宿主应用完整配置。"],
-  },
-  {
-    slug: "preview-image", name: "previewImage", category: "设备", summary: "使用原生图片查看器预览一张或多张图片。", nativeType: "previewImage",
-    params: [{ name: "urls", type: "string[]", required: true, description: "待预览的图片 URL 列表，不可为空。" }, ...callbacks],
-    returns: "Promise resolve 后直接触发 success，不读取业务 success 字段。",
-    example: `uni.previewImage({\n  urls: [\n    'https://example.com/a.jpg',\n    'https://example.com/b.jpg'\n  ],\n  success: () => console.log('预览器已打开'),\n  fail: () => console.error('打开失败')\n});`,
-    notes: ["urls 为空时会立即触发 fail，但当前实现不会触发 complete。", "远程图片需为 HTTPS，并确保原生网络安全策略允许访问。"],
-  },
-  {
-    slug: "login", name: "login", category: "用户", summary: "触发宿主应用登录流程。", nativeType: "login",
-    params: callbacks,
-    returns: "原生响应 success 为真时，success 回调收到完整结果；类型声明包含 loginSuccess: boolean 与 userId: string。",
-    example: `uni.login({\n  success: ({ loginSuccess, userId }) => {\n    if (loginSuccess) console.log('用户', userId);\n  },\n  fail: () => console.error('登录失败')\n});`,
-    notes: ["登录态与敏感凭证应由宿主安全保存，不要写入 URL 或日志。", "建议 Flutter 端区分取消、失败和未登录三种状态。"],
-  },
-  {
-    slug: "get-token", name: "getToken", category: "用户", summary: "读取宿主应用当前登录令牌。", nativeType: "getToken",
-    params: callbacks,
-    returns: "success 回调收到 { token: string }；原生响应 success 为假时触发 fail。",
-    example: `uni.getToken({\n  success: ({ token }) => {\n    fetch('/api/profile', {\n      headers: { Authorization: \`Bearer \${token}\` }\n    });\n  },\n  fail: () => console.error('未获取到 token')\n});`,
-    notes: ["token 只在内存中短暂使用，不要写入 localStorage、埋点或控制台。", "建议原生端返回过期时间，并提供刷新或重新登录策略。"],
-  },
-  {
-    slug: "navigate-to", name: "FlutterNavigateTo", exportedAs: "native type: navigateTo", category: "导航", summary: "跳转到宿主应用中的指定路由。", nativeType: "navigateTo",
-    params: [
-      { name: "route", type: "string", required: true, description: "目标页面路由。注意源码字段名是 route，不是 url。" },
-      { name: "params", type: "any", required: true, description: "传给目标页面的可序列化参数。" }, ...callbacks,
-    ],
-    returns: "原生响应 success 为真时触发 success，无回调参数。",
-    example: `uni.FlutterNavigateTo({\n  route: '/freightDetail',\n  params: { orderId: 'CHDD20241012000000144273' },\n  success: () => console.log('跳转成功'),\n  fail: () => console.error('跳转失败')\n});`,
-    notes: ["源码导出并挂载的名称是 FlutterNavigateTo，不是 README 示例中的 navigateTo。后者可能来自已有 uni runtime。", "params 必须可被 JSON.stringify 正确序列化。"],
-  },
-  {
-    slug: "navigate-back", name: "FlutterNavigateBack", exportedAs: "native type: back", category: "导航", summary: "返回宿主应用上一页。", nativeType: "back",
-    params: callbacks,
-    returns: "当前实现不检查原生结果，也不会调用 success；Promise 拒绝时会调用 fail，结束时调用 complete。",
-    example: `uni.FlutterNavigateBack({\n  fail: () => console.error('返回失败'),\n  complete: () => console.log('返回请求已结束')\n});`,
-    notes: ["虽然 options 在类型上可省略，但实现会直接解构它；调用时请务必传入对象。", "源码导出名称是 FlutterNavigateBack；现有 uni.navigateBack 可能属于 uni-app runtime。"],
-  },
-  {
-    slug: "set-navigation-bar-title", name: "setNavigationBarTitle", category: "导航", summary: "更新 Flutter 原生导航栏标题。", nativeType: "updateNavTitle",
-    params: [{ name: "title", type: "string", required: true, description: "新的导航栏标题，不可为空。" }, ...callbacks],
-    returns: "Promise resolve 后直接触发 success，不读取业务 success 字段。",
-    example: `uni.setNavigationBarTitle({\n  title: '货源详情',\n  success: () => console.log('标题已更新'),\n  fail: () => console.error('更新失败')\n});`,
-    notes: ["JavaScript API 名与发送给原生的 type 不同：前者是 setNavigationBarTitle，后者是 updateNavTitle。", "标题为空会立即触发 fail，当前实现不会触发 complete。"],
-  },
-  {
-    slug: "wx-share", name: "wxShare", category: "生态", summary: "通过 Flutter 宿主分享到微信。", nativeType: "wxShare", availability: "仅 Flutter 容器",
-    params: [
-      { name: "title", type: "string", required: true, description: "分享标题。" },
-      { name: "url", type: "string", required: true, description: "分享链接，建议使用 HTTPS。" },
-      { name: "shareType", type: "['appMessage', 'timeline', 'favorite']", required: true, description: "源码声明为固定三项元组；分别代表好友、朋友圈、收藏。" }, ...callbacks,
-    ],
-    returns: "原生响应 success 为真时触发 success，无回调参数。",
-    example: `uni.wxShare({\n  title: '货源详情',\n  url: location.href,\n  shareType: ['appMessage', 'timeline', 'favorite'],\n  success: () => console.log('分享成功'),\n  fail: () => console.error('分享失败')\n});`,
-    notes: ["README 示例传两项，但类型声明要求固定三项；这是现有类型与示例的差异。", "微信 SDK 注册、Universal Link / App Link 等平台配置由 Flutter 宿主负责。"],
-  },
-  {
-    slug: "navigate-to-mini-program", name: "navigateToMiniProgram", category: "生态", summary: "从宿主应用打开指定微信小程序。", nativeType: "navigateToMiniProgram", availability: "依赖微信能力",
-    params: [
-      { name: "username", type: "string", required: true, description: "小程序原始 ID，例如 gh_xxx。" },
-      { name: "path", type: "string", description: "打开的小程序页面路径，可携带查询参数。" },
-      { name: "miniProgramType", type: "'release' | 'trial'", description: "正式版或体验版；未提供时由原生侧决定。" }, ...callbacks,
-    ],
-    returns: "原生响应 success 为真时触发 success，无回调参数。",
-    example: `uni.navigateToMiniProgram({\n  username: 'gh_0f5f3e0e118f',\n  path: 'pages/detail/index?id=123',\n  miniProgramType: 'release',\n  success: () => console.log('已打开')\n});`,
-    notes: ["需要宿主应用完成微信开放平台配置。", "username 是小程序原始 ID，不是展示名称或 AppID。"],
-  },
-  {
-    slug: "open-file", name: "openFile", category: "生态", summary: "下载或打开远程文件。", nativeType: "openFile",
-    params: [
-      { name: "fileUrl", type: "string", required: true, description: "远程文件地址。" },
-      { name: "fileName", type: "string", required: true, description: "带扩展名的文件名，用于识别文件类型。" }, ...callbacks,
-    ],
-    returns: "原生响应 success 为真时触发 success，无回调参数。",
-    example: `uni.openFile({\n  fileUrl: 'https://example.com/files/report.xlsx',\n  fileName: 'report.xlsx',\n  success: () => console.log('文件已打开'),\n  fail: () => console.error('打开失败')\n});`,
-    notes: ["建议原生侧限制 URL 协议、域名、文件大小和 MIME 类型，避免打开不可信内容。", "文件下载进度与缓存策略目前未暴露给 H5。"],
-  },
+  { slug:"navigate-to",name:"navigateTo",category:"导航",summary:"在 H5 页面栈或 Flutter 原生页面之间导航。",nativeType:"navigateTo",params:[
+    {name:"url",type:"string",description:"H5 页面地址；纯 H5 App 环境也可作为原生地址。"},{name:"nativeUrl",type:"string",description:"App 原生路由；传入即走 Bridge。"},{name:"params",type:"any",description:"原生路由参数；未传时从 URL query 解析。"},native(),...cb],
+    returns:"H5 模式调用被覆盖前的官方 uni.navigateTo；原生模式识别 success、status 或 data.success 后触发回调。",
+    example:`// uni-app：H5 页面\nuni.navigateTo({ url: '/subs/detail/index?id=1' });\n\n// uni-app：App 原生页面\nuni.navigateTo({ nativeUrl: '/home', params: { id: 1 } });\n\n// 纯 H5：App 内默认原生\nwindow.WLYDFlutterBridge?.navigateTo({ url: '/home' });`,
+    notes:["uni-app 不传 nativeUrl/useNative 时保持官方 H5 行为。","纯 H5 没有官方 uni 回退，App 内默认走原生。"] },
+  { slug:"redirect-to",name:"redirectTo",category:"导航",summary:"关闭当前页后跳转，可选择 H5 或 Flutter 原生路由。",nativeType:"redirectTo",params:[{name:"url",type:"string",description:"H5 页面地址。"},{name:"nativeUrl",type:"string",description:"App 原生路由；传入即走 Bridge。"},{name:"params",type:"any",description:"原生路由参数。"},native(),...cb],returns:"双轨行为与 navigateTo 相同；原生成功兼容三种回包形态。",example:`uni.redirectTo({\n  nativeUrl: '/order-list',\n  params: { status: 'pending' },\n  fail: console.error\n});`,notes:["URL query 仅在未显式传 params 时解析。","H5 回退依赖初始化时成功捕获官方 redirectTo。"] },
+  { slug:"navigate-back",name:"navigateBack",category:"导航",summary:"返回 H5 页面栈或 Flutter 原生页面栈。",nativeType:"navigateBack",params:[{name:"delta",type:"number",description:"H5 返回层数，默认 1。"},{name:"nativeDelta",type:"number",description:"原生返回层数；传入即走 Bridge。"},...cb],returns:"原生响应 success 为真时触发 success；H5 模式调用官方 uni.navigateBack。",example:`// H5 返回\nuni.navigateBack({ delta: 1 });\n\n// App 原生返回\nuni.navigateBack({ nativeDelta: 2 });`,notes:["options 现在可以安全省略。","nativeDelta 为 0 时不会单独触发原生分支，建议使用正整数。"] },
+  { slug:"switch-tab",name:"switchTab",category:"导航",summary:"切换 H5 tabBar 页面或 App 原生主 Tab。",nativeType:"switchTab",params:[{name:"url",type:"string",description:"H5 tabBar 页面路径。"},native(),{name:"nativeTabIndex",type:"number",description:"App Tab 下标：0 首页、1 找货、2 运单、3 我的。"},...cb],returns:"原生模式返回原始成功数据；H5 模式调用官方 switchTab。",example:`uni.switchTab({\n  useNative: true,\n  nativeTabIndex: 2,\n  success: () => console.log('已切换到运单')\n});`,notes:["原生侧实际收到字段 index。","未传 nativeTabIndex 时原生默认切到 0。"] },
+  { slug:"open-webview",name:"openWebview",category:"导航",summary:"由 Flutter 打开新的 WebView 页面。",nativeType:"openWebview",availability:"仅 App",params:[{name:"url",type:"string",description:"要打开的 H5 地址。"},{name:"params",type:"object",description:"支持 needUserInfo、closePage、title 及扩展字段。"},...cb],returns:"原生响应 success 为真时触发 success。",example:`uni.openWebview({\n  url: 'https://example.com/detail?id=1',\n  params: { needUserInfo: 1, closePage: 0, title: '详情' }\n});`,notes:["URL query 会合并进 params，显式 params 优先。","建议对可打开域名设置原生白名单。"] },
+  { slug:"set-navigation-bar-title",name:"setNavigationBarTitle",category:"导航",summary:"更新 App 原生导航栏标题。",nativeType:"setNavigationBarTitle",params:[{name:"title",type:"string",required:true,description:"新标题，不可为空。"},...cb],returns:"Promise resolve 后触发 success。",example:`uni.setNavigationBarTitle({ title: '订单详情' });`,notes:["v0.0.39 的 Native type 已与 JS API 名统一。","uni-app shim 在 App 内走原生，App 外回退官方实现。"] },
+  { slug:"set-navigation-bar-visible",name:"setNavigationBarVisible",category:"导航",summary:"控制 App 原生导航栏显示或隐藏。",nativeType:"setNavigationBarVisible",params:[{name:"visible",type:"boolean",required:true,description:"true 显示，false 隐藏。"},...cb],returns:"Promise resolve 后触发 success。",example:`uni.setNavigationBarVisible({ visible: false });`,notes:["App 外的 uni-app shim 会直接执行 success，不改变 H5 UI。","纯 H5 仅在 App 内挂载完整 API。"] },
+  { slug:"get-system-info-sync",name:"getSystemInfoSync",category:"系统",summary:"获取设备、系统、屏幕、安全区和 App 版本信息。",nativeType:"getSystemInfoSync",params:[native(),...cb],returns:"H5 模式同步返回 SystemInfoSyncResult；原生模式返回 Promise<SystemInfoSyncResult>。",example:`const info = await uni.getSystemInfoSync({ useNative: true });\nconsole.log(info.statusBarHeight, info.safeAreaInsets);`,notes:["同一个 API 可能同步或异步，跨模式代码建议统一使用 await。","结果包含 deviceBrand、deviceModel、osName、screenWidth、statusBarHeight 等字段。"] },
+  { slug:"get-location",name:"getLocation",category:"系统",summary:"使用官方 H5 定位或 Flutter 原生定位获取经纬度。",nativeType:"getLocation",params:[native(),...cb],returns:"success 收到 { latitude, longitude }，Bridge 已解开 registerApi 与业务 data 两层包装。",example:`uni.getLocation({\n  useNative: true,\n  success: ({ latitude, longitude }) => console.log(latitude, longitude),\n  fail: console.error\n});`,notes:["原生定位需要 iOS/Android 权限声明与用户授权。","纯 H5 App 环境默认走原生。"] },
+  { slug:"open-location",name:"openLocation",category:"系统",summary:"在 H5 或原生地图中查看指定位置。",nativeType:"openLocation",params:[native(),{name:"latitude",type:"number",required:true,description:"纬度。"},{name:"longitude",type:"number",required:true,description:"经度。"},{name:"scale",type:"number",description:"缩放级别，建议 5–18。"},{name:"name",type:"string",description:"位置名称。"},{name:"address",type:"string",description:"地址详情。"},...cb],returns:"原生响应未明确返回 success:false 时视为成功；H5 模式调用官方 API。",example:`uni.openLocation({\n  useNative: true, latitude: 31.2304, longitude: 121.4737,\n  name: '上海', scale: 15\n});`,notes:["经纬度应使用 WGS84/宿主约定坐标系。","App 地图能力不可用时通过 fail 降级提示。"] },
+  { slug:"make-phone-call",name:"makePhoneCall",category:"系统",summary:"调用 Flutter 宿主发起电话拨号。",nativeType:"makePhoneCall",availability:"App 原生",params:[{name:"phoneNumber",type:"string",required:true,description:"需要拨打的电话号码。"},...cb],returns:"响应未明确为 success:false 时触发 success。",example:`uni.makePhoneCall({ phoneNumber: '10086', fail: console.error });`,notes:["当前实现始终调用 Bridge，不走官方 H5 回退。","应在原生侧校验号码并让用户确认。"] },
+  { slug:"scan-code",name:"scanCode",category:"系统",summary:"调用 H5 或 Flutter 扫码能力。",nativeType:"scanCode",params:[native(),{name:"onlyFromCamera",type:"boolean",description:"是否仅允许相机扫码。"},{name:"scanType",type:"Array<'barCode' | 'qrCode' | 'datamatrix' | 'pdf417'>",description:"允许识别的码制。"},...cb],returns:"success 收到 { result, scanType?, charSet?, path? }；原生函数也返回该结果 Promise。",example:`uni.scanCode({\n  useNative: true,\n  scanType: ['qrCode', 'barCode'],\n  success: ({ result }) => console.log(result)\n});`,notes:["需要相机权限。","扫码内容属于不可信输入，使用前需校验协议和业务格式。"] },
+  { slug:"show-toast",name:"showToast",category:"交互",summary:"显示 H5 或 Flutter 原生轻提示。",nativeType:"showToast",params:[native(),{name:"title",type:"string",required:true,description:"提示内容。"},{name:"icon",type:"'success' | 'loading' | 'error' | 'none' | 'fail' | 'exception'",description:"图标类型。"},{name:"duration",type:"number",description:"展示时长，单位毫秒。"},{name:"mask",type:"boolean",description:"是否阻止穿透。"},{name:"position",type:"'top' | 'center' | 'bottom'",description:"展示位置。"},...cb],returns:"原生响应未明确失败时视为成功；否则回退官方 uni.showToast。",example:`uni.showToast({ useNative: true, title: '保存成功', icon: 'success', duration: 1800 });`,notes:["提示文案保持简短。","image 参数也会透传，但是否支持取决于原生 Handler。"] },
+  { slug:"hide-toast",name:"hideToast",category:"交互",summary:"隐藏当前 H5 或 Flutter Toast。",nativeType:"hideToast",params:[native(),...cb],returns:"原生响应未明确失败时视为成功。",example:`uni.hideToast({ useNative: true });`,notes:["需与显示 Toast 的执行通道一致。"] },
+  { slug:"show-loading",name:"showLoading",category:"交互",summary:"显示 H5 或 Flutter 原生加载提示。",nativeType:"showLoading",params:[native(),{name:"title",type:"string",description:"加载文案。"},{name:"mask",type:"boolean",description:"是否阻止触摸穿透。"},...cb],returns:"原生响应未明确失败时视为成功。",example:`uni.showLoading({ useNative: true, title: '加载中', mask: true });`,notes:["无论业务成功或失败，都应配对调用 hideLoading。"] },
+  { slug:"hide-loading",name:"hideLoading",category:"交互",summary:"隐藏当前 H5 或 Flutter Loading。",nativeType:"hideLoading",params:[native(),...cb],returns:"原生响应未明确失败时视为成功。",example:`uni.hideLoading({ useNative: true });`,notes:["建议放在业务 Promise 的 finally 中。"] },
+  { slug:"choose-image",name:"chooseImage",category:"媒体",summary:"从相册选择图片或调用相机拍摄。",nativeType:"chooseImage",params:[native(),{name:"count",type:"number",required:true,description:"最多选择数量。"},{name:"sizeType",type:"['original', 'compressed']",required:true,description:"源码当前仍声明为固定二元组。"},{name:"sourceType",type:"['album', 'camera']",required:true,description:"源码当前仍声明为固定二元组。"},...cb],returns:"原生回包 data.success 为真时，success 收到 tempFilePaths 与 tempFiles。",example:`uni.chooseImage({\n  useNative: true, count: 1,\n  sizeType: ['original', 'compressed'],\n  sourceType: ['album', 'camera'],\n  success: ({ tempFilePaths }) => console.log(tempFilePaths)\n});`,notes:["分支 README 示例允许单项数组，但当前 TypeScript 类型仍是固定二元组，这是已知差异。","需要相册/相机权限。"] },
+  { slug:"preview-image",name:"previewImage",category:"媒体",summary:"使用 Flutter 原生查看器预览一张或多张图片。",nativeType:"previewImage",availability:"App 原生",params:[{name:"urls",type:"string[]",required:true,description:"图片 URL 列表，不可为空。"},...cb],returns:"Promise resolve 后直接触发 success。",example:`uni.previewImage({ urls: ['https://example.com/a.jpg', 'https://example.com/b.jpg'] });`,notes:["urls 为空会触发 fail，但不会触发 complete。","远程图片建议使用 HTTPS。"] },
+  { slug:"set-storage-sync",name:"setStorageSync",category:"存储",summary:"写入官方 uni 存储或 Flutter 原生存储。",nativeType:"setStorageSync",params:[native(),{name:"key",type:"string",required:true,description:"存储键。"},{name:"data",type:"any",required:true,description:"可序列化值。"},...cb],returns:"H5 模式同步返回官方结果；原生模式返回 Promise。",example:`await uni.setStorageSync({ useNative: true, key: 'token', data: 'xxx' });`,notes:["签名与官方 uni.setStorageSync(key, data) 不兼容：Bridge 必须传对象。","敏感 token 不建议长期放在 H5 可读存储。"] },
+  { slug:"get-storage-sync",name:"getStorageSync",category:"存储",summary:"读取官方 uni 存储或 Flutter 原生存储。",nativeType:"getStorageSync",params:[native(),{name:"key",type:"string",required:true,description:"存储键。"},...cb],returns:"H5 模式同步返回值；原生模式 Promise resolve 为 data 或原始回包。",example:`const token = await uni.getStorageSync({ useNative: true, key: 'token' });`,notes:["签名与官方 uni.getStorageSync(key) 不兼容：Bridge 必须传对象。","跨模式建议统一使用 await。"] },
+  { slug:"remove-storage-sync",name:"removeStorageSync",category:"存储",summary:"删除官方 uni 存储或 Flutter 原生存储中的键。",nativeType:"removeStorageSync",params:[native(),{name:"key",type:"string",required:true,description:"要删除的存储键。"},...cb],returns:"H5 模式同步；原生 data.success 为真时返回 data。",example:`await uni.removeStorageSync({ useNative: true, key: 'token' });`,notes:["签名与官方 removeStorageSync(key) 不兼容。","原生回包需要将 success 放在 data 内。"] },
+  { slug:"login",name:"login",category:"扩展",summary:"触发 Flutter 宿主登录流程。",nativeType:"login",availability:"仅 App",params:cb,returns:"原生响应 success 为真时，success 收到包含 loginSuccess、userId 的完整结果。",example:`uni.login({ success: ({ loginSuccess, userId }) => console.log(loginSuccess, userId) });`,notes:["登录凭证由宿主安全保存，不要写入 URL 或日志。"] },
+  { slug:"wx-share",name:"wxShare",category:"扩展",summary:"通过 Flutter 宿主分享到微信。",nativeType:"wxShare",availability:"仅 App",params:[{name:"title",type:"string",required:true,description:"分享标题。"},{name:"url",type:"string",description:"网页分享地址。"},{name:"path",type:"string",description:"小程序页面路径。"},{name:"imageUrl",type:"string",description:"分享图片地址。"},{name:"shareType",type:"Array<'appMessage' | 'timeline' | 'favorite'>",required:true,description:"分享渠道数组。"},...cb],returns:"原生响应 success 为真时触发 success。",example:`uni.wxShare({ title: '订单详情', url: location.href, shareType: ['appMessage'] });`,notes:["v0.0.39 已改为普通数组，可只传需要的渠道。","微信平台能力与白名单由宿主配置。"] },
+  { slug:"navigate-to-mini-program",name:"navigateToMiniProgram",category:"扩展",summary:"从 Flutter 宿主打开指定微信小程序。",nativeType:"navigateToMiniProgram",availability:"仅 App",params:[{name:"username",type:"string",required:true,description:"小程序原始 ID。"},{name:"path",type:"string",description:"目标页面路径。"},{name:"miniProgramType",type:"'release' | 'trial'",description:"正式版或体验版。"},...cb],returns:"原生响应 success 为真时触发 success。",example:`uni.navigateToMiniProgram({ username: 'gh_xxx', path: 'pages/detail/index?id=1', miniProgramType: 'release' });`,notes:["选项类型已更名为 FlutterBridgeNavigateToMiniProgramOptions，旧名仍保留为 deprecated 别名。"] },
+  { slug:"open-file",name:"openFile",category:"扩展",summary:"让 Flutter 下载并打开远程文件。",nativeType:"openFile",availability:"仅 App",params:[{name:"fileUrl",type:"string",required:true,description:"远程文件地址。"},{name:"fileName",type:"string",required:true,description:"带扩展名的文件名。"},...cb],returns:"原生响应 success 为真时触发 success。",example:`uni.openFile({ fileUrl: 'https://example.com/report.xlsx', fileName: 'report.xlsx' });`,notes:["原生侧应限制协议、域名、MIME 和文件大小。"] },
+  { slug:"native",name:"native / callNative",aliases:"window.WLYDFlutterBridge.native",category:"扩展",summary:"调用 Flutter registerBsHandler 注册的自定义业务方法。",nativeType:"动态 method",availability:"仅 App",params:[{name:"method",type:"string",required:true,description:"原生注册的 Handler 名。"},{name:"params",type:"Record<string, unknown>",description:"业务参数，默认空对象。"}],returns:"Promise<NativeResponse<T>>，统一为 { success, data?, message? }，兼容新旧两种回包协议。",example:`const res = await window.WLYDFlutterBridge?.native<{ name: string }>(\n  'getUserInfo',\n  { id: 1 }\n);\n\n// 或 ESM\nimport { callNative } from '@wlydfe/flutter-bridge';`,notes:["业务优先使用 native/callNative，不建议直接依赖底层 invoke。","未知或非法回包会转换为 success:false 与说明文本。"] },
 ];
 
 export const lifecycleHooks = [
-  ["onPageCreated", "页面对应的 Flutter 容器创建完成"],
-  ["onResume", "宿主应用从后台回到前台"],
-  ["onPause", "宿主应用进入后台或失去焦点"],
-  ["onLoad", "页面加载事件"],
-  ["onShow", "页面变为可见"],
-  ["onHide", "页面变为不可见"],
-  ["onDestroy", "页面或容器销毁"],
+  ["onPageCreated","Flutter 页面容器创建完成"],["onResume","宿主应用回到前台"],["onPause","宿主应用进入后台"],["onLoad","页面加载"],["onShow","页面显示"],["onHide","页面隐藏"],["onDestroy","页面或容器销毁"],
 ] as const;
 
 export const navGroups = [
-  { label: "设备能力", items: apiDocs.filter((x) => x.category === "设备") },
-  { label: "页面与导航", items: apiDocs.filter((x) => x.category === "导航") },
-  { label: "用户与生态", items: apiDocs.filter((x) => x.category === "用户" || x.category === "生态") },
+  {label:"导航与页面",items:apiDocs.filter(x=>x.category==="导航")},
+  {label:"系统能力",items:apiDocs.filter(x=>x.category==="系统")},
+  {label:"交互反馈",items:apiDocs.filter(x=>x.category==="交互")},
+  {label:"媒体与存储",items:apiDocs.filter(x=>x.category==="媒体"||x.category==="存储")},
+  {label:"App 扩展",items:apiDocs.filter(x=>x.category==="扩展")},
 ];
-

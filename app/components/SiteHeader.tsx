@@ -19,7 +19,7 @@ export function SiteHeader() {
     <header className="topbar">
       <a className="brand" href="/"><span className="brandMark">W</span><span>WLYD Bridge</span></a>
       <nav className="topnav" aria-label="主导航"><a href="/guide/getting-started">指南</a><a href="/api">API 参考</a><a href="/guide/protocol">工作原理</a></nav>
-      <div className="topActions"><button className="searchButton" onClick={() => setOpen(true)}><span>⌕</span> 搜索文档 <kbd>⌘ K</kbd></button><span className="version">v0.0.15</span></div>
+      <div className="topActions"><button className="searchButton" onClick={() => setOpen(true)}><span>⌕</span> 搜索文档 <kbd>⌘ K</kbd></button><span className="version">v0.0.39</span></div>
     </header>
     {open && <div className="searchOverlay" role="presentation" onMouseDown={() => setOpen(false)}>
       <div className="searchDialog" role="dialog" aria-modal="true" aria-label="搜索文档" onMouseDown={(e) => e.stopPropagation()}>
@@ -29,4 +29,3 @@ export function SiteHeader() {
     </div>}
   </>;
 }
-

@@ -4,11 +4,11 @@ import "./globals.css";
 export const metadata: Metadata = {
   metadataBase: new URL("https://wlyd-bridge-docs.hufuhao2026.chatgpt.site"),
   title: { default: "WLYD Bridge · Flutter 原生能力桥接", template: "%s · WLYD Bridge" },
-  description: "@wlydfe/flutter-bridge 接入指南、API 参考、通信协议与最佳实践。",
+  description: "Flutter App WebView 与 H5 的统一桥接层：复用 uni.xxx 风格，统一原生能力调用、双轨导航与新旧回包。",
   icons: { icon: "/favicon.svg", shortcut: "/favicon.svg" },
   openGraph: {
     title: "WLYD Bridge · Flutter 原生能力桥接",
-    description: "Flutter × WebView × JavaScript：接入指南、API 参考、通信协议与最佳实践。",
+    description: "Flutter App WebView 与 H5 的统一桥接层：统一原生能力调用、双轨导航与新旧回包。",
     url: "https://wlyd-bridge-docs.hufuhao2026.chatgpt.site",
     siteName: "WLYD Bridge",
     type: "website",
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "WLYD Bridge · Flutter 原生能力桥接",
-    description: "Flutter × WebView × JavaScript：接入指南、API 参考、通信协议与最佳实践。",
+    description: "Flutter App WebView 与 H5 的统一桥接层：统一原生能力调用、双轨导航与新旧回包。",
     images: ["https://wlyd-bridge-docs.hufuhao2026.chatgpt.site/og.png"],
   },
 };

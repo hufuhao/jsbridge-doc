@@ -1,6 +1,8 @@
+import { nativeBusinessDocs } from "./native-business-docs";
+
 export type ApiParam = { name: string; type: string; required?: boolean; description: string };
 export type ApiDoc = {
-  slug: string; name: string; aliases?: string; category: "导航" | "系统" | "交互" | "媒体" | "存储" | "扩展";
+  slug: string; name: string; aliases?: string; exportedAs?: string; category: "导航" | "系统" | "交互" | "媒体" | "存储" | "扩展" | "业务";
   summary: string; nativeType: string; availability?: string; params: ApiParam[]; returns: string; example: string; notes: string[];
 };
 
@@ -41,6 +43,7 @@ export const apiDocs: ApiDoc[] = [
   { slug:"wx-share",name:"wxShare",category:"扩展",summary:"通过 Flutter 宿主分享到微信。",nativeType:"wxShare",availability:"仅 App",params:[{name:"title",type:"string",required:true,description:"分享标题。"},{name:"url",type:"string",description:"网页分享地址。"},{name:"path",type:"string",description:"小程序页面路径。"},{name:"imageUrl",type:"string",description:"分享图片地址。"},{name:"shareType",type:"Array<'appMessage' | 'timeline' | 'favorite'>",required:true,description:"分享渠道数组。"},...cb],returns:"原生响应 success 为真时触发 success。",example:`uni.wxShare({ title: '订单详情', url: location.href, shareType: ['appMessage'] });`,notes:["v0.0.39 已改为普通数组，可只传需要的渠道。","微信平台能力与白名单由宿主配置。"] },
   { slug:"navigate-to-mini-program",name:"navigateToMiniProgram",category:"扩展",summary:"从 Flutter 宿主打开指定微信小程序。",nativeType:"navigateToMiniProgram",availability:"仅 App",params:[{name:"username",type:"string",required:true,description:"小程序原始 ID。"},{name:"path",type:"string",description:"目标页面路径。"},{name:"miniProgramType",type:"'release' | 'trial'",description:"正式版或体验版。"},...cb],returns:"原生响应 success 为真时触发 success。",example:`uni.navigateToMiniProgram({ username: 'gh_xxx', path: 'pages/detail/index?id=1', miniProgramType: 'release' });`,notes:["选项类型已更名为 FlutterBridgeNavigateToMiniProgramOptions，旧名仍保留为 deprecated 别名。"] },
   { slug:"open-file",name:"openFile",category:"扩展",summary:"让 Flutter 下载并打开远程文件。",nativeType:"openFile",availability:"仅 App",params:[{name:"fileUrl",type:"string",required:true,description:"远程文件地址。"},{name:"fileName",type:"string",required:true,description:"带扩展名的文件名。"},...cb],returns:"原生响应 success 为真时触发 success。",example:`uni.openFile({ fileUrl: 'https://example.com/report.xlsx', fileName: 'report.xlsx' });`,notes:["原生侧应限制协议、域名、MIME 和文件大小。"] },
+  ...nativeBusinessDocs,
   { slug:"native",name:"native / callNative",aliases:"window.WLYDFlutterBridge.native",category:"扩展",summary:"调用 Flutter registerBsHandler 注册的自定义业务方法。",nativeType:"动态 method",availability:"仅 App",params:[{name:"method",type:"string",required:true,description:"原生注册的 Handler 名。"},{name:"params",type:"Record<string, unknown>",description:"业务参数，默认空对象。"}],returns:"Promise<NativeResponse<T>>，统一为 { success, data?, message? }，兼容新旧两种回包协议。",example:`const res = await window.WLYDFlutterBridge?.native<{ name: string }>(\n  'getUserInfo',\n  { id: 1 }\n);\n\n// 或 ESM\nimport { callNative } from '@wlydfe/flutter-bridge';`,notes:["业务优先使用 native/callNative，不建议直接依赖底层 invoke。","未知或非法回包会转换为 success:false 与说明文本。"] },
 ];
 
@@ -54,4 +57,5 @@ export const navGroups = [
   {label:"交互反馈",items:apiDocs.filter(x=>x.category==="交互")},
   {label:"媒体与存储",items:apiDocs.filter(x=>x.category==="媒体"||x.category==="存储")},
   {label:"App 扩展",items:apiDocs.filter(x=>x.category==="扩展")},
+  {label:"司机业务 Native",items:apiDocs.filter(x=>x.category==="业务")},
 ];

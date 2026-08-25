@@ -1,5 +1,6 @@
 import { CopyButton } from "./components/CopyButton";
 import { SiteHeader } from "./components/SiteHeader";
+import { SiteLink } from "./components/SiteLink";
 import { apiDocs } from "../lib/docs";
 
 const categories = [
@@ -16,7 +17,7 @@ export default function Home() {
       <div className="heroGrid" aria-hidden="true"/><div className="eyebrow"><span /> Flutter × WebView × JavaScript</div>
       <h1>让 Web，优雅地调用<br/><em>Flutter 原生能力</em></h1>
       <p><strong>@wlydfe/flutter-bridge</strong> 是 Flutter App WebView 与 H5 之间的统一桥接层。它让前端继续使用熟悉的 <code>uni.xxx</code> 风格调用原生能力，同时保留 H5 与小程序原有行为。</p>
-      <div className="heroActions"><a className="primary" href="/guide/getting-started">5 分钟接入 <b>→</b></a><a className="secondary" href="/api">浏览全部 API</a></div>
+      <div className="heroActions"><SiteLink className="primary" href="/guide/getting-started">5 分钟接入 <b>→</b></SiteLink><SiteLink className="secondary" href="/api">浏览全部 API</SiteLink></div>
       <div className="install"><span>$</span><code>npm install @wlydfe/flutter-bridge</code><CopyButton text="npm install @wlydfe/flutter-bridge" compact/></div>
       <div className="statRail"><span><b>{apiDocs.length}</b> 个 API 页面</span><span><b>2</b> 种接入入口</span><span><b>1.0</b> Bridge 协议</span></div>
     </section>
@@ -30,14 +31,14 @@ export default function Home() {
       </div>
     </section>
     <section className="quick homeSection">
-      <div className="sectionIntro"><span className="sectionNo">02 / QUICK START</span><h2>为两种 H5 场景而生</h2><p>uni-app 使用 <code>uni.xxx</code> 并配置 Vite 插件；Vue、React 或原生 H5 使用 <code>window.WLYDFlutterBridge</code>。底层通道统一由 Flutter 注入。</p><a className="textLink" href="/guide/getting-started">查看完整接入指南 <b>→</b></a></div>
+      <div className="sectionIntro"><span className="sectionNo">02 / QUICK START</span><h2>为两种 H5 场景而生</h2><p>uni-app 使用 <code>uni.xxx</code> 并配置 Vite 插件；Vue、React 或原生 H5 使用 <code>window.WLYDFlutterBridge</code>。底层通道统一由 Flutter 注入。</p><SiteLink className="textLink" href="/guide/getting-started">查看完整接入指南 <b>→</b></SiteLink></div>
       <div className="codeBlock homeCode"><div className="codeTop"><span>app.ts</span><CopyButton text={quickCode} compact/></div><pre><code>{quickCode}</code></pre></div>
     </section>
     <section className="apiSection homeSection">
-      <div className="sectionHeading"><div><span className="sectionNo">03 / API REFERENCE</span><h2>覆盖常用原生能力</h2></div><a className="textLink" href="/api">全部 {apiDocs.length} 个 API <b>→</b></a></div>
-      <div className="apiGrid">{categories.map((group) => <article key={group.title}><span className="apiIcon">{group.icon}</span><h3>{group.title}</h3><p>{group.desc}</p><ul>{group.apis.map((name) => <li key={name}>{name}</li>)}</ul><a href="/api">查看接口 <b>↗</b></a></article>)}</div>
+      <div className="sectionHeading"><div><span className="sectionNo">03 / API REFERENCE</span><h2>覆盖常用原生能力</h2></div><SiteLink className="textLink" href="/api">全部 {apiDocs.length} 个 API <b>→</b></SiteLink></div>
+      <div className="apiGrid">{categories.map((group) => <article key={group.title}><span className="apiIcon">{group.icon}</span><h3>{group.title}</h3><p>{group.desc}</p><ul>{group.apis.map((name) => <li key={name}>{name}</li>)}</ul><SiteLink href="/api">查看接口 <b>↗</b></SiteLink></article>)}</div>
     </section>
-    <section className="mechanism homeSection"><div><span className="sectionNo">04 / HOW IT WORKS</span><h2>每次调用，都有迹可循</h2><p>JS Bridge 将类型、参数、唯一回调 ID 与协议版本序列化后发给 Flutter。原生处理完成，再用同一个 ID 精确唤醒对应 Promise。</p><a className="textLink light" href="/guide/protocol">理解通信协议 <b>→</b></a></div><div className="flow"><span>H5 / uni API</span><i>JSON message →</i><span>WLYDBridge</span><i>callbackId →</i><span>Flutter Native</span></div></section>
-    <footer><a className="brand" href="/"><span className="brandMark">W</span><span>WLYD Bridge</span></a><p>基于 F-hfh-bridge · 包版本 v0.0.39 · 协议 v1.0</p><div><a href="/guide/getting-started">指南</a><a href="/guide/match-driver">项目实战</a><a href="/api">API</a><a href="/guide/protocol">协议</a></div></footer>
+    <section className="mechanism homeSection"><div><span className="sectionNo">04 / HOW IT WORKS</span><h2>每次调用，都有迹可循</h2><p>JS Bridge 将类型、参数、唯一回调 ID 与协议版本序列化后发给 Flutter。原生处理完成，再用同一个 ID 精确唤醒对应 Promise。</p><SiteLink className="textLink light" href="/guide/protocol">理解通信协议 <b>→</b></SiteLink></div><div className="flow"><span>H5 / uni API</span><i>JSON message →</i><span>WLYDBridge</span><i>callbackId →</i><span>Flutter Native</span></div></section>
+    <footer><SiteLink className="brand" href="/"><span className="brandMark">W</span><span>WLYD Bridge</span></SiteLink><p>基于 F-hfh-bridge · 包版本 v0.0.39 · 协议 v1.0</p><div><SiteLink href="/guide/getting-started">指南</SiteLink><SiteLink href="/guide/match-driver">项目实战</SiteLink><SiteLink href="/api">API</SiteLink><SiteLink href="/guide/protocol">协议</SiteLink></div></footer>
   </main></>;
 }

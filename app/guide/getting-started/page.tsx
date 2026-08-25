@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { CodeBlock } from "../../components/CodeBlock";
 import { DocsShell } from "../../components/DocsShell";
+import { SiteLink } from "../../components/SiteLink";
 
 export const metadata: Metadata = { title: "快速开始", description: "在 uni-app 或纯 H5 中接入 WLYD Bridge v0.0.39。" };
+export const dynamic = "force-static";
 
 const uniMain = `// main.ts：多端项目仅在 H5 打入 Bridge\n// #ifdef H5\nimport '@wlydfe/flutter-bridge';\n// #endif`;
 const viteCode = `import { createRequire } from 'node:module';\n\nconst { flutterBridgeUniPlugin } = createRequire(import.meta.url)(\n  '@wlydfe/flutter-bridge/vite-plugin'\n);\n\n// vite plugins 中注册\nplugins: [\n  platform === 'h5' && flutterBridgeUniPlugin('h5'),\n  // ...其他插件\n]`;
@@ -24,6 +26,6 @@ export default function GettingStarted() {
     <div className="notice warning"><b>初始化顺序</b><p>先注入 <code>WLYDBridge</code>，再加载 H5 Bridge 包。库只在模块初始化时判断 App 环境；通道若稍后出现，不会自动重新挂载完整 API。</p></div>
     <h2>环境判断</h2><CodeBlock code={`// uni-app\nif (uni.isInApp) console.log(uni.bridgeVersion);\n\n// 普通 H5\nif (window.WLYDFlutterBridge?.isInApp) {\n  console.log(window.WLYDFlutterBridge.bridgeVersion);\n}`}/><p>App 外仅提供 <code>isInApp</code> 与 <code>bridgeVersion</code>，完整原生 API 只会在 Flutter WebView 内挂载。</p>
     <h2>上线前检查</h2><ul className="checklist"><li>Channel 名严格为 <code>WLYDBridge</code>，区分大小写</li><li>uni-app H5 已同时配置入口、Vite 插件与类型</li><li>纯 H5 仅在客户端执行 import，SSR 不在服务端求值</li><li>Flutter 已注册所用 API 或业务 Handler</li><li>回调使用相同 callbackId，并返回可解析 JSON</li><li>相机、相册、定位、微信等系统权限已经配置</li></ul>
-    <div className="nextGuide"><span>下一步</span><a href="/guide/protocol">理解 Bridge 通信协议 →</a></div>
+    <div className="nextGuide"><span>下一步</span><SiteLink href="/guide/protocol">理解 Bridge 通信协议 →</SiteLink></div>
   </article><aside className="toc"><b>本页内容</b><a href="#">安装</a><a href="#">uni-app 接入</a><a href="#">纯 H5 接入</a><a href="#">Flutter 通道</a><a href="#">上线检查</a></aside></DocsShell>;
 }

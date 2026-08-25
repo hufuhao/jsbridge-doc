@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import { CodeBlock } from "../../components/CodeBlock";
 import { DocsShell } from "../../components/DocsShell";
+import { SiteLink } from "../../components/SiteLink";
 
 export const metadata: Metadata = {
   title: "司机项目实战与限制",
   description: "基于 uniapp-match-driver 与 flutter_match_driver 源码整理的 Bridge API 用法、限制与风险。",
 };
+export const dynamic = "force-static";
 
 const nativeMethods = [
   ["onceLocation", "一次原生定位", "/api/native-once-location"],
@@ -53,19 +55,19 @@ export default function MatchDriverGuide() {
     <h2 id="used-apis">项目实际使用的统一 API</h2>
     <div className="paramTable compactTable">
       <div className="paramHead"><span>API</span><span>项目用途</span><span>关键边界</span></div>
-      <div className="paramRow"><span><a href="/api/navigate-to"><code>navigateTo</code></a></span><span>原生首页、资质、登录、活动页</span><p>只有 <code>nativeUrl</code> 才进入原生路由；普通 <code>url</code> 保持 H5 页面栈。</p></div>
-      <div className="paramRow"><span><a href="/api/navigate-back"><code>navigateBack</code></a></span><span>关闭 App WebView 或返回原生页</span><p>使用 <code>nativeDelta:1</code>；值为 0 不会触发原生分支。</p></div>
-      <div className="paramRow"><span><a href="/api/get-system-info-sync"><code>getSystemInfoSync</code></a></span><span>读取原生状态栏高度</span><p><code>useNative:true</code> 后由同步 API 变成 Promise，必须 <code>await</code> 或 <code>.then</code>。</p></div>
-      <div className="paramRow"><span><a href="/api/get-location"><code>getLocation</code></a></span><span>App 内统一定位</span><p>App 失败后项目不再回退官方定位，避免重复权限弹窗。</p></div>
-      <div className="paramRow"><span><a href="/api/set-navigation-bar-title"><code>setNavigationBarTitle</code></a></span><span>同步 H5 页面标题到原生导航栏</span><p>App 内自动走 Bridge；必须保证 Channel 在包加载前完成注入。</p></div>
-      <div className="paramRow"><span><a href="/api/make-phone-call"><code>makePhoneCall</code></a></span><span>客服电话、调度电话、虚拟号拨打</span><p>App 内自动走原生；号码仍需业务校验，敏感号码不要写日志。</p></div>
-      <div className="paramRow"><span><a href="/api/wx-share"><code>wxShare</code></a></span><span>招募活动、公共分享</span><p>只在 App 内挂载；项目里出现的 <code>timeLine</code>、<code>poster</code> 不属于当前类型声明的标准值，应与 Flutter 再对齐。</p></div>
+      <div className="paramRow"><span><SiteLink href="/api/navigate-to"><code>navigateTo</code></SiteLink></span><span>原生首页、资质、登录、活动页</span><p>只有 <code>nativeUrl</code> 才进入原生路由；普通 <code>url</code> 保持 H5 页面栈。</p></div>
+      <div className="paramRow"><span><SiteLink href="/api/navigate-back"><code>navigateBack</code></SiteLink></span><span>关闭 App WebView 或返回原生页</span><p>使用 <code>nativeDelta:1</code>；值为 0 不会触发原生分支。</p></div>
+      <div className="paramRow"><span><SiteLink href="/api/get-system-info-sync"><code>getSystemInfoSync</code></SiteLink></span><span>读取原生状态栏高度</span><p><code>useNative:true</code> 后由同步 API 变成 Promise，必须 <code>await</code> 或 <code>.then</code>。</p></div>
+      <div className="paramRow"><span><SiteLink href="/api/get-location"><code>getLocation</code></SiteLink></span><span>App 内统一定位</span><p>App 失败后项目不再回退官方定位，避免重复权限弹窗。</p></div>
+      <div className="paramRow"><span><SiteLink href="/api/set-navigation-bar-title"><code>setNavigationBarTitle</code></SiteLink></span><span>同步 H5 页面标题到原生导航栏</span><p>App 内自动走 Bridge；必须保证 Channel 在包加载前完成注入。</p></div>
+      <div className="paramRow"><span><SiteLink href="/api/make-phone-call"><code>makePhoneCall</code></SiteLink></span><span>客服电话、调度电话、虚拟号拨打</span><p>App 内自动走原生；号码仍需业务校验，敏感号码不要写日志。</p></div>
+      <div className="paramRow"><span><SiteLink href="/api/wx-share"><code>wxShare</code></SiteLink></span><span>招募活动、公共分享</span><p>只在 App 内挂载；项目里出现的 <code>timeLine</code>、<code>poster</code> 不属于当前类型声明的标准值，应与 Flutter 再对齐。</p></div>
       <div className="paramRow"><span><code>chooseImage / scanCode / openLocation</code></span><span>桥接测试与部分业务能力</span><p>不传 <code>useNative:true</code> 时仍调用官方 uni API；不要以为安装包后所有同名方法都会自动走 Flutter。</p></div>
     </div>
 
     <h2 id="native-methods">14 个 uni.native 业务方法</h2>
     <p>这些方法不是 npm 包内置能力，而是司机 App 通过 <code>registerBsHandler</code> 注册的业务协议。点击方法名可查看参数、返回值、示例和源码限制。</p>
-    <div className="apiTable">{nativeMethods.map(([name, summary, href]) => <a key={name} href={href}><span className="method">APP</span><span><b>{name}</b><small>{summary}</small></span><em>uni.native</em><strong>→</strong></a>)}</div>
+    <div className="apiTable">{nativeMethods.map(([name, summary, href]) => <SiteLink key={name} href={href}><span className="method">APP</span><span><b>{name}</b><small>{summary}</small></span><em>uni.native</em><strong>→</strong></SiteLink>)}</div>
 
     <h2 id="important-risks">当前最需要注意的限制</h2>
     <div className="riskGrid">
@@ -92,6 +94,6 @@ export default function MatchDriverGuide() {
       <li><code>chooseMedia</code> 移除原生硬编码 businessType，让上传归属由调用参数决定</li>
       <li>为 Native 能力建立最低 App 版本表或能力探测接口，避免只依赖 npm 版本</li>
     </ul>
-    <div className="nextGuide"><span>逐项查看</span><a href="/api/native-once-location">从 onceLocation 开始 →</a></div>
+    <div className="nextGuide"><span>逐项查看</span><SiteLink href="/api/native-once-location">从 onceLocation 开始 →</SiteLink></div>
   </article><aside className="toc"><b>本页内容</b><a href="#used-apis">项目 API</a><a href="#native-methods">Native 方法</a><a href="#important-risks">重要限制</a><a href="#recommended-pattern">调用模板</a><a href="#fix-priority">修复建议</a></aside></DocsShell>;
 }

@@ -91,8 +91,18 @@ actions tied to the current ChatGPT user. Leave public content anonymous.
 
 - `npm run dev`: start local development
 - `npm run build`: verify the vinext build output
+- `npm run build:pages`: export the static GitHub Pages site to `dist/client`
 - `npm test`: build the starter and verify its rendered loading skeleton
 - `npm run db:generate`: generate Drizzle migrations after schema changes
+
+## GitHub Pages
+
+The workflow in `.github/workflows/pages.yml` deploys every push to `main`.
+It derives the repository subpath automatically, so both project Pages
+repositories and `<account>.github.io` repositories are supported.
+
+After pushing the repository to GitHub, open **Settings → Pages**, choose
+**GitHub Actions** as the source, and run the **Deploy GitHub Pages** workflow.
 
 ## Learn More
 

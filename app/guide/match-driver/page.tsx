@@ -24,6 +24,14 @@ const nativeMethods = [
   ["waybillTrackCollection", "上报一次装卸点轨迹", "/api/native-waybill-track"],
   ["jump_to_third_app", "通过 Deep Link/Scheme 返回三方 App", "/api/native-jump-third-app"],
   ["completeLearnDate", "同步学习豁免截止日", "/api/native-complete-learn-date"],
+  ["startWaybillTrackCollection", "启动运单持续轨迹采集", "/api/native-start-waybill-track"],
+  ["stopWaybillTrackCollection", "停止运单持续轨迹采集", "/api/native-stop-waybill-track"],
+  ["openThirdApp", "打开支付宝等外部 App", "/api/native-open-third-app"],
+  ["previewPDF", "预览远程文件", "/api/native-preview-pdf"],
+  ["getRiskDeviceId", "读取风控设备标识", "/api/native-risk-device-id"],
+  ["getRequestHeaders", "读取 App 请求头", "/api/native-request-headers"],
+  ["startTransportMinistryLocation", "启动交通部轨迹采集", "/api/native-start-transport-location"],
+  ["stopTransportMinistryLocation", "停止交通部轨迹采集", "/api/native-stop-transport-location"],
 ] as const;
 
 const safeNative = `async function callDriverNative<T>(
@@ -48,7 +56,7 @@ export default function MatchDriverGuide() {
     <p className="breadcrumb">指南 / 司机项目实战</p>
     <span className="docKicker">SOURCE AUDIT · uniapp-match-driver</span>
     <h1>司机项目中的真实用法与限制</h1>
-    <p className="lead">本页不是抽象接口清单，而是对 <code>uniapp-match-driver</code> 实际调用与 <code>flutter_match_driver</code> Handler 实现的交叉核对。当前项目使用 Bridge v0.0.39，共发现 14 个业务 Native 方法，以及导航、定位、系统信息、标题、拨号和分享等统一 API。</p>
+    <p className="lead">本页不是抽象接口清单，而是对 <code>uniapp-match-driver</code> 实际调用与 <code>flutter_match_driver</code> Handler 实现的交叉核对。当前项目使用 Bridge v0.0.39，共发现 22 个业务 Native 方法，以及导航、定位、系统信息、标题、拨号和分享等统一 API。</p>
 
     <div className="notice info"><b>扫描口径</b><p>只把会进入 Flutter Bridge 的调用计入：<code>nativeUrl</code>、<code>nativeDelta</code>、<code>useNative:true</code>、App 内自动走原生的 API，以及 <code>uni.native(method)</code>。普通 H5/小程序里的官方 <code>uni.xxx</code> 仍遵循 uni-app 文档。</p></div>
 
@@ -65,13 +73,13 @@ export default function MatchDriverGuide() {
       <div className="paramRow"><span><code>chooseImage / scanCode / openLocation</code></span><span>桥接测试与部分业务能力</span><p>不传 <code>useNative:true</code> 时仍调用官方 uni API；不要以为安装包后所有同名方法都会自动走 Flutter。</p></div>
     </div>
 
-    <h2 id="native-methods">14 个 uni.native 业务方法</h2>
+    <h2 id="native-methods">22 个 uni.native 业务方法</h2>
     <p>这些方法不是 npm 包内置能力，而是司机 App 通过 <code>registerBsHandler</code> 注册的业务协议。点击方法名可查看参数、返回值、示例和源码限制。</p>
     <div className="apiTable">{nativeMethods.map(([name, summary, href]) => <SiteLink key={name} href={href}><span className="method">APP</span><span><b>{name}</b><small>{summary}</small></span><em>uni.native</em><strong>→</strong></SiteLink>)}</div>
 
     <h2 id="important-risks">当前最需要注意的限制</h2>
     <div className="riskGrid">
-      <div><b>部分业务回包不合规</b><p><code>pushToWaybillDetails</code>、<code>pushToWaybillCertificate</code> 只返回 message，<code>completeLearnDate</code> 返回空对象。原生副作用可能已经成功，但 Bridge 会得到 <code>success:false</code>。</p></div>
+      <div><b>部分业务回包不合规</b><p><code>pushToWaybillDetails</code>、<code>pushToWaybillCertificate</code> 只返回 message，<code>completeLearnDate</code> 返回空对象。原生副作用可能已经成功，Bridge 会把无协议壳对象视为 <code>success:true</code>，但这个值不能证明操作完成。</p></div>
       <div><b>没有内置超时</b><p>Flutter 不回调时 Promise 和 callbackId 会永久保留。普通能力建议业务层加超时；人脸识别可能接近 1 分钟，需要单独配置更长时间。</p></div>
       <div><b>能力由 App 版本决定</b><p>npm 包有类型不代表旧版 App 已注册对应 Handler。<code>bridgeVersion</code> 是 JS 包版本，不是 App 能力版本；未注册会返回 Method not implemented。</p></div>
       <div><b>初始化只判断一次</b><p>Bridge 包加载时如果 <code>window.WLYDBridge</code> 尚未注入，<code>uni.native</code> 与完整 API 不会在 Channel 出现后自动补挂载。</p></div>

@@ -6,7 +6,7 @@ import { apiDocs } from "../lib/docs";
 const categories = [
   { icon: "↗", title: "页面与导航", desc: "H5 页面栈与 Flutter 原生路由双轨运行", apis: ["navigateTo", "redirectTo", "navigateBack", "switchTab", "openWebview"] },
   { icon: "⌁", title: "系统与交互", desc: "定位、扫码、设备信息、Toast 与 Loading", apis: ["getSystemInfoSync", "getLocation", "scanCode", "showToast", "openLocation"] },
-  { icon: "✦", title: "媒体、存储与业务", desc: "图片、原生存储、微信及司机项目 14 个 Native Handler", apis: ["chooseMedia", "pushToWaybillDetails", "shuJuBaoWeb", "waybillTrackCollection", "native / callNative"] },
+  { icon: "✦", title: "媒体、存储与业务", desc: "图片、原生存储、微信及司机项目 22 个 Native Handler", apis: ["chooseMedia", "pushToWaybillDetails", "shuJuBaoWeb", "waybillTrackCollection", "native / callNative"] },
 ];
 
 const quickCode = `// #ifdef H5\nimport '@wlydfe/flutter-bridge';\n// #endif\n\n// H5 页面\nuni.navigateTo({ url: '/subs/detail/index?id=1' });\n\n// Flutter 原生页面\nuni.navigateTo({ nativeUrl: '/home' });`;
